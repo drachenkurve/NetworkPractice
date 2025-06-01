@@ -4,7 +4,7 @@ bool FSocketUtility::Startup()
 {
 	WSADATA WSAData;
 
-	const int32_t ErrorCode = WSAStartup(MAKEWORD(2, 2), &WSAData);
+	const i32 ErrorCode = WSAStartup(MAKEWORD(2, 2), &WSAData);
 	if (ErrorCode == 0)
 	{
 		std::cout << std::format("WinSock: Version {}.{} ({}.{}), MaxSocket={}, MaxUdp={}",
@@ -24,21 +24,21 @@ void FSocketUtility::Cleanup()
 	WSACleanup();
 }
 
-int32_t FSocketUtility::GetLastErrorCode()
+i32 FSocketUtility::GetLastErrorCode()
 {
 	return WSAGetLastError();
 }
 
 void FSocketUtility::ReportLastErrorCode()
 {
-	LPSTR Buffer = nullptr;
-	const int32_t ErrorCode = GetLastErrorCode();
+	char* Buffer = nullptr;
+	const i32 ErrorCode = GetLastErrorCode();
 
 	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		nullptr,
 		ErrorCode,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		reinterpret_cast<LPSTR>(&Buffer),
+		reinterpret_cast<char*>(&Buffer),
 		0, nullptr);
 
 	if (!Buffer)
@@ -58,7 +58,7 @@ std::shared_ptr<FSocketAddress> FSocketUtility::GetIPv4Address(const std::string
 
 	addrinfo* AddrInfo = nullptr;
 
-	const int32_t ErrorCode = getaddrinfo(Host.c_str(), Service.c_str(), &HintAddrInfo, &AddrInfo);
+	const i32 ErrorCode = getaddrinfo(Host.c_str(), Service.c_str(), &HintAddrInfo, &AddrInfo);
 
 	if (ErrorCode != 0)
 	{

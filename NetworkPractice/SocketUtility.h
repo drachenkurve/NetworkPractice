@@ -10,7 +10,7 @@ public:
 	static bool Startup();
 	static void Cleanup();
 
-	static int32_t GetLastErrorCode();
+	static i32 GetLastErrorCode();
 	static void ReportLastErrorCode();
 
 	static std::shared_ptr<FSocketAddress> GetIPv4Address(const std::string& Host, const std::string& Service);

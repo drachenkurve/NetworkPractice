@@ -30,6 +30,9 @@
     <ClInclude Include="SocketUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SocketTCP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LaunchWindows.cpp">
@@ -42,6 +45,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SocketUDP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SocketTCP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

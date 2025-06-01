@@ -13,8 +13,8 @@ public:
 	~FSocketUDP();
 
 	bool Bind(const FSocketAddress& Address);
-	bool SendTo(const uint8_t* Data, int32_t Count, int32_t& ByteCount, const FSocketAddress& ToAddress);
-	bool RecvFrom(uint8_t* Data, int32_t Count, int32_t& ByteCount, FSocketAddress& FromAddress);
+	bool SendTo(const u8* Data, i32 Count, i32& ByteCount, const FSocketAddress& Address);
+	bool RecvFrom(u8* Data, i32 Count, i32& ByteCount, FSocketAddress& OutAddress);
 
 private:
 	SOCKET Socket;

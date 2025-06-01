@@ -16,7 +16,7 @@ FSocketUDP::~FSocketUDP()
 // ReSharper disable once CppMemberFunctionMayBeConst
 bool FSocketUDP::Bind(const FSocketAddress& Address)
 {
-	const int32_t ErrorCode = bind(Socket, &Address.SockAddr, sizeof(Address.SockAddr));
+	const i32 ErrorCode = bind(Socket, &Address.SockAddr, sizeof(Address.SockAddr));
 	if (ErrorCode == 0)
 	{
 		return true;
@@ -27,9 +27,9 @@ bool FSocketUDP::Bind(const FSocketAddress& Address)
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FSocketUDP::SendTo(const uint8_t* Data, int32_t Count, int32_t& ByteCount, const FSocketAddress& ToAddress)
+bool FSocketUDP::SendTo(const u8* Data, i32 Count, i32& ByteCount, const FSocketAddress& Address)
 {
-	ByteCount = sendto(Socket, reinterpret_cast<const char*>(Data), Count, 0, &ToAddress.SockAddr, sizeof(ToAddress.SockAddr));
+	ByteCount = sendto(Socket, reinterpret_cast<const char*>(Data), Count, 0, &Address.SockAddr, sizeof(Address.SockAddr));
 
 	if (ByteCount >= 0)
 	{
@@ -41,11 +41,11 @@ bool FSocketUDP::SendTo(const uint8_t* Data, int32_t Count, int32_t& ByteCount, 
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FSocketUDP::RecvFrom(uint8_t* Data, int32_t Count, int32_t& ByteCount, FSocketAddress& FromAddress)
+bool FSocketUDP::RecvFrom(u8* Data, i32 Count, i32& ByteCount, FSocketAddress& OutAddress)
 {
-	int32_t Length = sizeof(FromAddress.SockAddr);
+	i32 Length = sizeof(OutAddress.SockAddr);
 
-	ByteCount = recvfrom(Socket, reinterpret_cast<char*>(Data), Count, 0, &FromAddress.SockAddr, &Length);
+	ByteCount = recvfrom(Socket, reinterpret_cast<char*>(Data), Count, 0, &OutAddress.SockAddr, &Length);
 
 	if (ByteCount >= 0)
 	{
