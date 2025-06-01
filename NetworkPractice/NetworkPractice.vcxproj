@@ -137,17 +137,22 @@
   <ItemGroup>
     <ClInclude Include="Platform.h" />
     <ClInclude Include="PlatformWindows.h" />
-    <ClInclude Include="SocketTCP.h" />
+    <ClInclude Include="Socket.h" />
+    <ClInclude Include="TCPSocket.h" />
     <ClInclude Include="SocketUtility.h" />
-    <ClInclude Include="SocketUDP.h" />
+    <ClInclude Include="UDPSocket.h" />
     <ClInclude Include="SocketAddress.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LaunchWindows.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="SocketAddress.cpp" />
-    <ClCompile Include="SocketTCP.cpp" />
+    <ClCompile Include="TCPSocket.cpp" />
     <ClCompile Include="SocketUtility.cpp" />
-    <ClCompile Include="SocketUDP.cpp" />
+    <ClCompile Include="UDPSocket.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Socket.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

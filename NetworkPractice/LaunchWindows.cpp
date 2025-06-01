@@ -1,5 +1,6 @@
 ﻿#include "Platform.h"
-#include "SocketUtility.h"
+
+extern void GuardedMain();
 
 void LaunchWindowsStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance, char* pCmdLine, int32_t nCmdShow)
 {
@@ -10,15 +11,12 @@ void LaunchWindowsStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance, char* pC
 
 	try
 	{
-		FSocketUtility::Startup();
-		FSocketUtility::GetIPv4Address("", "");
+		GuardedMain();
 	}
 	catch (std::exception& e)
 	{
 		std::cout << e.what() << '\n';
 	}
-
-	FSocketUtility::Cleanup();
 }
 
 void LaunchWindowsShutdown()

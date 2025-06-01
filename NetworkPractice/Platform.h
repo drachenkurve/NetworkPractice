@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 #include "PlatformWindows.h"
 

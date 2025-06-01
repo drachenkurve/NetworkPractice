@@ -1,8 +1,10 @@
 ﻿#pragma once
 
 #include "Platform.h"
-#include "SocketAddress.h"
-#include "SocketUDP.h"
+
+class FSocketAddress;
+class FTCPSocket;
+class FUDPSocket;
 
 class FSocketUtility
 {
@@ -11,8 +13,11 @@ public:
 	static void Cleanup();
 
 	static i32 GetLastErrorCode();
+	static void ReportErrorCode(i32 ErrorCode);
 	static void ReportLastErrorCode();
 
 	static std::shared_ptr<FSocketAddress> GetIPv4Address(const std::string& Host, const std::string& Service);
-	static std::shared_ptr<FSocketUDP> CreateIPv4UDP();
+
+	static std::shared_ptr<FTCPSocket> CreateIPv4TCP();
+	static std::shared_ptr<FUDPSocket> CreateIPv4UDP();
 };

@@ -7,6 +7,7 @@ class FSocketAddress
 	friend class FSocketUtility;
 
 public:
+	FSocketAddress();
 	FSocketAddress(const sockaddr& InSockAddr);
 
 	void Clear();

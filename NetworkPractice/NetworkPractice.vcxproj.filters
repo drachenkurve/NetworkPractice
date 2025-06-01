@@ -24,13 +24,16 @@
     <ClInclude Include="Platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SocketUDP.h">
+    <ClInclude Include="UDPSocket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SocketUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SocketTCP.h">
+    <ClInclude Include="TCPSocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Socket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,11 +47,19 @@
     <ClCompile Include="SocketUtility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SocketUDP.cpp">
+    <ClCompile Include="UDPSocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SocketTCP.cpp">
+    <ClCompile Include="TCPSocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Socket.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

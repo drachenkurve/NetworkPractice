@@ -1,5 +1,9 @@
 ﻿#include "SocketUtility.h"
 
+#include "SocketAddress.h"
+#include "TCPSocket.h"
+#include "UDPSocket.h"
+
 bool FSocketUtility::Startup()
 {
 	WSADATA WSAData;
@@ -7,15 +11,11 @@ bool FSocketUtility::Startup()
 	const i32 ErrorCode = WSAStartup(MAKEWORD(2, 2), &WSAData);
 	if (ErrorCode == 0)
 	{
-		std::cout << std::format("WinSock: Version {}.{} ({}.{}), MaxSocket={}, MaxUdp={}",
-			WSAData.wVersion >> 8, WSAData.wVersion & 0xFF,
-			WSAData.wHighVersion >> 8, WSAData.wHighVersion & 0xFF,
-			WSAData.iMaxSockets, WSAData.iMaxUdpDg);
-
+		std::cout << std::format("WinSock Version {}.{}", WSAData.wVersion >> 8, WSAData.wVersion & 0xFF);
 		return true;
 	}
 
-	ReportLastErrorCode();
+	ReportErrorCode(ErrorCode);
 	return false;
 }
 
@@ -29,10 +29,9 @@ i32 FSocketUtility::GetLastErrorCode()
 	return WSAGetLastError();
 }
 
-void FSocketUtility::ReportLastErrorCode()
+void FSocketUtility::ReportErrorCode(i32 ErrorCode)
 {
 	char* Buffer = nullptr;
-	const i32 ErrorCode = GetLastErrorCode();
 
 	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		nullptr,
@@ -51,6 +50,11 @@ void FSocketUtility::ReportLastErrorCode()
 	LocalFree(Buffer);
 }
 
+void FSocketUtility::ReportLastErrorCode()
+{
+	ReportErrorCode(GetLastErrorCode());
+}
+
 std::shared_ptr<FSocketAddress> FSocketUtility::GetIPv4Address(const std::string& Host, const std::string& Service)
 {
 	addrinfo HintAddrInfo{};
@@ -59,10 +63,9 @@ std::shared_ptr<FSocketAddress> FSocketUtility::GetIPv4Address(const std::string
 	addrinfo* AddrInfo = nullptr;
 
 	const i32 ErrorCode = getaddrinfo(Host.c_str(), Service.c_str(), &HintAddrInfo, &AddrInfo);
-
 	if (ErrorCode != 0)
 	{
-		ReportLastErrorCode();
+		ReportErrorCode(ErrorCode);
 
 		if (AddrInfo)
 		{
@@ -79,9 +82,10 @@ std::shared_ptr<FSocketAddress> FSocketUtility::GetIPv4Address(const std::string
 		AddrInfo = AddrInfo->ai_next;
 	}
 
-	if (!AddrInfo->ai_addr)
+	if (!AddrInfo || AddrInfo->ai_addr)
 	{
 		freeaddrinfo(AddrInfoHead);
+		return nullptr;
 	}
 
 	const std::shared_ptr<FSocketAddress> SocketAddress = std::make_shared<FSocketAddress>(*AddrInfo->ai_addr);
@@ -91,14 +95,26 @@ std::shared_ptr<FSocketAddress> FSocketUtility::GetIPv4Address(const std::string
 	return SocketAddress;
 }
 
-std::shared_ptr<FSocketUDP> FSocketUtility::CreateIPv4UDP()
+std::shared_ptr<FTCPSocket> FSocketUtility::CreateIPv4TCP()
 {
-	SOCKET Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (!Socket)
+	SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (Socket != INVALID_SOCKET)
 	{
-		ReportLastErrorCode();
-		return nullptr;
+		return std::make_shared<FTCPSocket>(Socket);
 	}
 
-	return std::make_shared<FSocketUDP>(Socket);
+	ReportLastErrorCode();
+	return nullptr;
+}
+
+std::shared_ptr<FUDPSocket> FSocketUtility::CreateIPv4UDP()
+{
+	SOCKET Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (Socket != INVALID_SOCKET)
+	{
+		return std::make_shared<FUDPSocket>(Socket);
+	}
+
+	ReportLastErrorCode();
+	return nullptr;
 }
