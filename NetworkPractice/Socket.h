@@ -17,6 +17,12 @@ protected:
 	~TSocket();
 
 public:
+	bool IsValid() const;
+
+	// effective when TCP socket
+	bool Shutdown(i32 Mode);
+	bool Close();
+
 	bool SetNonBlocking(bool bNonBlocking);
 	bool SetBroadcast(bool bBroadcast);
 	bool SetSendBufferSize(i32 Size, i32& NewSize);

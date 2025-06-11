@@ -15,4 +15,6 @@ public:
 	bool Bind(const FSocketAddress& Address);
 	bool SendTo(const u8* Data, i32 Count, i32& ByteCount, const FSocketAddress& Address, i32 flags = 0);
 	bool RecvFrom(u8* Data, i32 Count, i32& ByteCount, FSocketAddress& OutAddress, i32 flags = 0);
+
+	// TODO: multicast
 };

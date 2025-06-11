@@ -14,6 +14,48 @@ TSocket<T>::~TSocket()
 	closesocket(Socket);
 }
 
+template <typename T>
+bool TSocket<T>::IsValid() const
+{
+	return Socket != INVALID_SOCKET;
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+template <typename T>
+bool TSocket<T>::Shutdown(i32 Mode)
+{
+	const i32 ErrorCode = shutdown(Socket, Mode);
+	if (ErrorCode == 0)
+	{
+		return true;
+	}
+
+	FSocketUtility::ReportErrorCode(ErrorCode);
+	return false;
+}
+
+template <typename T>
+bool TSocket<T>::Close()
+{
+	if (Socket == INVALID_SOCKET)
+	{
+		return false;
+	}
+
+	const i32 ErrorCode = closesocket(Socket);
+
+	// socket is not valid anyway
+	Socket = INVALID_SOCKET;
+
+	if (ErrorCode == 0)
+	{
+		return true;
+	}
+
+	FSocketUtility::ReportErrorCode(ErrorCode);
+	return false;
+}
+
 // ReSharper disable once CppMemberFunctionMayBeConst
 template <typename T>
 bool TSocket<T>::SetNonBlocking(bool bNonBlocking)

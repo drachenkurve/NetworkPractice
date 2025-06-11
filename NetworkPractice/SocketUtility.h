@@ -16,6 +16,7 @@ public:
 	static void ReportErrorCode(i32 ErrorCode);
 	static void ReportLastErrorCode();
 
+	// TODO: change to FSocketAddressResult, which contains host, service, name, error code, array of result data
 	static std::shared_ptr<FSocketAddress> GetIPv4Address(const std::string& Host, const std::string& Service);
 
 	static std::shared_ptr<FTCPSocket> CreateIPv4TCP();
