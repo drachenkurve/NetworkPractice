@@ -2,6 +2,8 @@
 
 #include "Platform.h"
 
+class FSocketAddress;
+
 template <typename T>
 class TSocket
 {
@@ -19,7 +21,8 @@ protected:
 public:
 	bool IsValid() const;
 
-	// effective when TCP socket
+	bool Bind(const FSocketAddress& Address);
+
 	bool Shutdown(i32 Mode);
 	bool Close();
 

@@ -11,7 +11,7 @@ FTCPSocket::FTCPSocket(SOCKET InSocket) :
 // ReSharper disable once CppMemberFunctionMayBeConst
 bool FTCPSocket::Connect(const FSocketAddress& Address)
 {
-	const i32 ErrorCode = connect(Socket, &Address.SockAddr, sizeof(Address.SockAddr));
+	const i32 ErrorCode = connect(Socket, reinterpret_cast<const sockaddr*>(&Address.Storage), Address.GetStorageSize());
 	if (ErrorCode == 0)
 	{
 		return true;
@@ -37,8 +37,8 @@ bool FTCPSocket::Listen(i32 MaxBacklog)
 // ReSharper disable once CppMemberFunctionMayBeConst
 std::shared_ptr<FTCPSocket> FTCPSocket::Accept(FSocketAddress& OutAddress)
 {
-	i32 Length = sizeof(OutAddress.SockAddr);
-	SOCKET NewSocket = accept(Socket, &OutAddress.SockAddr, &Length);
+	i32 Length = sizeof(sockaddr_storage);
+	SOCKET NewSocket = accept(Socket, reinterpret_cast<sockaddr*>(&OutAddress.Storage), &Length);
 
 	if (NewSocket != INVALID_SOCKET)
 	{

@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "SocketAddress.h"
 #include "SocketUtility.h"
 
 template <typename T>
@@ -18,6 +19,20 @@ template <typename T>
 bool TSocket<T>::IsValid() const
 {
 	return Socket != INVALID_SOCKET;
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+template <typename T>
+bool TSocket<T>::Bind(const FSocketAddress& Address)
+{
+	const i32 ErrorCode = bind(Socket, reinterpret_cast<const sockaddr*>(&Address.Storage), Address.GetStorageSize());
+	if (ErrorCode == 0)
+	{
+		return true;
+	}
+
+	FSocketUtility::ReportErrorCode(ErrorCode);
+	return false;
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
