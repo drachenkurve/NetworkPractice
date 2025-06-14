@@ -4,10 +4,6 @@ void LaunchWindowsStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance, char* pC
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-#ifdef USE_SUBSYSTEM_CONSOLE
-#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
-#endif
-
 	try
 	{
 		GuardedMain();

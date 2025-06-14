@@ -6,8 +6,14 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Core", "Core\Core.vcxproj", "{8B9D9F47-4E88-42DA-A285-63205B1AD3D6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChatServer", "ChatServer\ChatServer.vcxproj", "{15B0FBB9-0A41-4618-BD7A-EDD68FE64ADE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8B9D9F47-4E88-42DA-A285-63205B1AD3D6} = {8B9D9F47-4E88-42DA-A285-63205B1AD3D6}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChatClient", "ChatClient\ChatClient.vcxproj", "{C125B85E-FDDC-40F2-ACCA-EAD3146737B4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8B9D9F47-4E88-42DA-A285-63205B1AD3D6} = {8B9D9F47-4E88-42DA-A285-63205B1AD3D6}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

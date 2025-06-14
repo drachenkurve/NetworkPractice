@@ -135,10 +135,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Connection.h" />
     <ClInclude Include="Iocp.h" />
     <ClInclude Include="LaunchWindows.h" />
+    <ClInclude Include="IocpContext.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="PlatformWindows.h" />
+    <ClInclude Include="PlatformWindowsUtility.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="TcpSocket.h" />
     <ClInclude Include="SocketUtility.h" />
@@ -146,8 +149,11 @@
     <ClInclude Include="SocketAddress.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Connection.cpp" />
     <ClCompile Include="Iocp.cpp" />
+    <ClCompile Include="IocpContext.cpp" />
     <ClCompile Include="LaunchWindows.cpp" />
+    <ClCompile Include="PlatformWindowsUtility.cpp" />
     <ClCompile Include="SocketAddress.cpp" />
     <ClCompile Include="TcpSocket.cpp" />
     <ClCompile Include="SocketUtility.cpp" />

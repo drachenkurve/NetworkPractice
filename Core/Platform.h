@@ -7,7 +7,10 @@
 #include <format>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <string_view>
+#include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "PlatformWindows.h"
