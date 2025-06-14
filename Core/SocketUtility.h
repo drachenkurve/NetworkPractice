@@ -3,8 +3,8 @@
 #include "Platform.h"
 
 class FSocketAddress;
-class FTCPSocket;
-class FUDPSocket;
+class FTcpSocket;
+class FUdpSocket;
 
 class FSocketUtility
 {
@@ -25,6 +25,11 @@ public:
 	// get IPv4 address from domain, such as "github.com", "http"
 	//static std::shared_ptr<FSocketAddress> GetIPv4AddressFromDomain(const std::string& Host, const std::string& Service);
 
-	static std::shared_ptr<FTCPSocket> CreateIPv4TCP();
-	static std::shared_ptr<FUDPSocket> CreateIPv4UDP();
+	static std::shared_ptr<FTcpSocket> CreateIPv4TCP();
+	static std::shared_ptr<FUdpSocket> CreateIPv4UDP();
+
+	static i32 Select(const std::vector<std::shared_ptr<FTcpSocket>>& ReadSockets, std::vector<std::shared_ptr<FTcpSocket>>& OutReadSockets,
+		const std::vector<std::shared_ptr<FTcpSocket>>& WriteSockets, std::vector<std::shared_ptr<FTcpSocket>>& OutWriteSockets,
+		const std::vector<std::shared_ptr<FTcpSocket>>& ExceptSockets, std::vector<std::shared_ptr<FTcpSocket>>& OutExceptSockets,
+		std::chrono::microseconds Timeout);
 };

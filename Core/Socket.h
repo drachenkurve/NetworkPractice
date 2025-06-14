@@ -31,6 +31,8 @@ public:
 	bool SetSendBufferSize(i32 Size, i32& NewSize);
 	bool SetRecvBufferSize(i32 Size, i32& NewSize);
 
+	SOCKET GetNative() const;
+
 protected:
 	SOCKET Socket;
 };

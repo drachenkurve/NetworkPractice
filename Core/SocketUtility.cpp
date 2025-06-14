@@ -1,8 +1,8 @@
 ﻿#include "SocketUtility.h"
 
 #include "SocketAddress.h"
-#include "TCPSocket.h"
-#include "UDPSocket.h"
+#include "TcpSocket.h"
+#include "UdpSocket.h"
 
 bool FSocketUtility::Startup()
 {
@@ -117,26 +117,102 @@ std::shared_ptr<FSocketAddress> FSocketUtility::GetIPv4AddressFromString(std::st
 //	return SocketAddress;
 //}
 
-std::shared_ptr<FTCPSocket> FSocketUtility::CreateIPv4TCP()
+std::shared_ptr<FTcpSocket> FSocketUtility::CreateIPv4TCP()
 {
 	SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (Socket != INVALID_SOCKET)
 	{
-		return std::make_shared<FTCPSocket>(Socket);
+		return std::make_shared<FTcpSocket>(Socket);
 	}
 
 	ReportLastErrorCode();
 	return nullptr;
 }
 
-std::shared_ptr<FUDPSocket> FSocketUtility::CreateIPv4UDP()
+std::shared_ptr<FUdpSocket> FSocketUtility::CreateIPv4UDP()
 {
 	SOCKET Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (Socket != INVALID_SOCKET)
 	{
-		return std::make_shared<FUDPSocket>(Socket);
+		return std::make_shared<FUdpSocket>(Socket);
 	}
 
 	ReportLastErrorCode();
 	return nullptr;
+}
+
+i32 FSocketUtility::Select(const std::vector<std::shared_ptr<FTcpSocket>>& ReadSockets, std::vector<std::shared_ptr<FTcpSocket>>& OutReadSockets,
+	const std::vector<std::shared_ptr<FTcpSocket>>& WriteSockets, std::vector<std::shared_ptr<FTcpSocket>>& OutWriteSockets,
+	const std::vector<std::shared_ptr<FTcpSocket>>& ExceptSockets, std::vector<std::shared_ptr<FTcpSocket>>& OutExceptSockets,
+	std::chrono::microseconds Timeout)
+{
+	// TODO: should I check timeout overflow?
+
+	fd_set ReadSet;
+	fd_set WriteSet;
+	fd_set ExceptSet;
+
+	FD_ZERO(&ReadSet);
+	FD_ZERO(&WriteSet);
+	FD_ZERO(&ExceptSet);
+
+	for (const std::shared_ptr<FTcpSocket>& ReadSocket : ReadSockets)
+	{
+		FD_SET(ReadSocket->Socket, &ReadSet);
+	}
+
+	for (const std::shared_ptr<FTcpSocket>& WriteSocket : WriteSockets)
+	{
+		FD_SET(WriteSocket->Socket, &WriteSet);
+	}
+
+	for (const std::shared_ptr<FTcpSocket>& ExceptSocket : ExceptSockets)
+	{
+		FD_SET(ExceptSocket->Socket, &ExceptSet);
+	}
+
+	timeval Timeval;
+	Timeval.tv_sec = static_cast<i32>(Timeout.count()) / 1000000;
+	Timeval.tv_usec = static_cast<i32>(Timeout.count()) % 1000000;
+
+	// nfds is ignored in Windows
+	const i32 ReturnCode = select(0, &ReadSet, &WriteSet, &ExceptSet, &Timeval);
+
+	if (ReturnCode > 0)
+	{
+		OutReadSockets.clear();
+		OutReadSockets.reserve(ReadSockets.size());
+
+		for (const std::shared_ptr<FTcpSocket>& ReadSocket : ReadSockets)
+		{
+			if (FD_ISSET(ReadSocket->Socket, &ReadSet))
+			{
+				OutReadSockets.emplace_back(ReadSocket);
+			}
+		}
+
+		OutWriteSockets.clear();
+		OutWriteSockets.reserve(WriteSockets.size());
+
+		for (const std::shared_ptr<FTcpSocket>& WriteSocket : WriteSockets)
+		{
+			if (FD_ISSET(WriteSocket->Socket, &WriteSet))
+			{
+				OutWriteSockets.emplace_back(WriteSocket);
+			}
+		}
+
+		OutExceptSockets.clear();
+		OutExceptSockets.reserve(ExceptSockets.size());
+
+		for (const std::shared_ptr<FTcpSocket>& ExceptSocket : ExceptSockets)
+		{
+			if (FD_ISSET(ExceptSocket->Socket, &ExceptSet))
+			{
+				OutExceptSockets.emplace_back(ExceptSocket);
+			}
+		}
+	}
+
+	return ReturnCode;
 }

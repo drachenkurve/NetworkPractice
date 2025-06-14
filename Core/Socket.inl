@@ -12,7 +12,11 @@ TSocket<T>::TSocket(SOCKET InSocket):
 template <typename T>
 TSocket<T>::~TSocket()
 {
-	closesocket(Socket);
+	if (Socket != INVALID_SOCKET)
+	{
+		closesocket(Socket);
+		Socket = INVALID_SOCKET;
+	}
 }
 
 template <typename T>
@@ -31,7 +35,7 @@ bool TSocket<T>::Bind(const FSocketAddress& Address)
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
 }
 
@@ -45,7 +49,7 @@ bool TSocket<T>::Shutdown(i32 Mode)
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
 }
 
@@ -67,7 +71,7 @@ bool TSocket<T>::Close()
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
 }
 
@@ -83,7 +87,7 @@ bool TSocket<T>::SetNonBlocking(bool bNonBlocking)
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
 }
 
@@ -99,7 +103,7 @@ bool TSocket<T>::SetBroadcast(bool bBroadcast)
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
 }
 
@@ -117,7 +121,7 @@ bool TSocket<T>::SetSendBufferSize(i32 Size, i32& NewSize)
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
 }
 
@@ -135,6 +139,12 @@ bool TSocket<T>::SetRecvBufferSize(i32 Size, i32& NewSize)
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
+}
+
+template <typename T>
+SOCKET TSocket<T>::GetNative() const
+{
+	return Socket;
 }

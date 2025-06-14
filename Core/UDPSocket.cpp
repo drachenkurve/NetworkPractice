@@ -1,15 +1,15 @@
-﻿#include "UDPSocket.h"
+﻿#include "UdpSocket.h"
 
 #include "SocketAddress.h"
 #include "SocketUtility.h"
 
-FUDPSocket::FUDPSocket(SOCKET InSocket) :
+FUdpSocket::FUdpSocket(SOCKET InSocket) :
 	TSocket(InSocket)
 {
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FUDPSocket::SendTo(const u8* Data, i32 Count, i32& ByteCount, const FSocketAddress& Address, i32 flags)
+bool FUdpSocket::SendTo(const u8* Data, i32 Count, i32& ByteCount, const FSocketAddress& Address, i32 flags)
 {
 	ByteCount = sendto(Socket, reinterpret_cast<const char*>(Data), Count, flags,
 		reinterpret_cast<const sockaddr*>(&Address.Storage), Address.GetStorageSize());
@@ -24,7 +24,7 @@ bool FUDPSocket::SendTo(const u8* Data, i32 Count, i32& ByteCount, const FSocket
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FUDPSocket::RecvFrom(u8* Data, i32 Count, i32& ByteCount, FSocketAddress& OutAddress, i32 flags)
+bool FUdpSocket::RecvFrom(u8* Data, i32 Count, i32& ByteCount, FSocketAddress& OutAddress, i32 flags)
 {
 	i32 Length = sizeof(sockaddr_storage);
 

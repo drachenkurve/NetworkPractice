@@ -135,23 +135,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Iocp.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="PlatformWindows.h" />
     <ClInclude Include="Socket.h" />
-    <ClInclude Include="TCPSocket.h" />
+    <ClInclude Include="TcpSocket.h" />
     <ClInclude Include="SocketUtility.h" />
-    <ClInclude Include="UDPSocket.h" />
+    <ClInclude Include="UdpSocket.h" />
     <ClInclude Include="SocketAddress.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Iocp.cpp" />
     <ClCompile Include="LaunchWindows.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="SocketAddress.cpp" />
-    <ClCompile Include="TCPSocket.cpp" />
+    <ClCompile Include="TcpSocket.cpp" />
     <ClCompile Include="SocketUtility.cpp" />
-    <ClCompile Include="UDPSocket.cpp" />
+    <ClCompile Include="UdpSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Iocp.inl" />
     <None Include="Socket.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,15 +1,15 @@
-﻿#include "TCPSocket.h"
+﻿#include "TcpSocket.h"
 
 #include "SocketAddress.h"
 #include "SocketUtility.h"
 
-FTCPSocket::FTCPSocket(SOCKET InSocket) :
+FTcpSocket::FTcpSocket(SOCKET InSocket) :
 	TSocket(InSocket)
 {
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FTCPSocket::Connect(const FSocketAddress& Address)
+bool FTcpSocket::Connect(const FSocketAddress& Address)
 {
 	const i32 ErrorCode = connect(Socket, reinterpret_cast<const sockaddr*>(&Address.Storage), Address.GetStorageSize());
 	if (ErrorCode == 0)
@@ -17,12 +17,12 @@ bool FTCPSocket::Connect(const FSocketAddress& Address)
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FTCPSocket::Listen(i32 MaxBacklog)
+bool FTcpSocket::Listen(i32 MaxBacklog)
 {
 	const i32 ErrorCode = listen(Socket, MaxBacklog);
 	if (ErrorCode == 0)
@@ -30,19 +30,19 @@ bool FTCPSocket::Listen(i32 MaxBacklog)
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-std::shared_ptr<FTCPSocket> FTCPSocket::Accept(FSocketAddress& OutAddress)
+std::shared_ptr<FTcpSocket> FTcpSocket::Accept(FSocketAddress& OutAddress)
 {
 	i32 Length = sizeof(sockaddr_storage);
 	SOCKET NewSocket = accept(Socket, reinterpret_cast<sockaddr*>(&OutAddress.Storage), &Length);
 
 	if (NewSocket != INVALID_SOCKET)
 	{
-		return std::make_shared<FTCPSocket>(NewSocket);
+		return std::make_shared<FTcpSocket>(NewSocket);
 	}
 
 	FSocketUtility::ReportLastErrorCode();
@@ -50,7 +50,7 @@ std::shared_ptr<FTCPSocket> FTCPSocket::Accept(FSocketAddress& OutAddress)
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FTCPSocket::Send(const u8* Data, i32 BufferSize, i32& ByteCount, i32 flags)
+bool FTcpSocket::Send(const u8* Data, i32 BufferSize, i32& ByteCount, i32 flags)
 {
 	ByteCount = send(Socket, reinterpret_cast<const char*>(Data), BufferSize, flags);
 	if (ByteCount >= 0)
@@ -63,7 +63,7 @@ bool FTCPSocket::Send(const u8* Data, i32 BufferSize, i32& ByteCount, i32 flags)
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FTCPSocket::Recv(u8* Data, i32 BufferSize, i32& ByteCount, i32 flags)
+bool FTcpSocket::Recv(u8* Data, i32 BufferSize, i32& ByteCount, i32 flags)
 {
 	ByteCount = recv(Socket, reinterpret_cast<char*>(Data), BufferSize, flags);
 	if (ByteCount >= 0)
@@ -76,7 +76,7 @@ bool FTCPSocket::Recv(u8* Data, i32 BufferSize, i32& ByteCount, i32 flags)
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FTCPSocket::SetNoDelay(bool bNoDelay)
+bool FTcpSocket::SetNoDelay(bool bNoDelay)
 {
 	const i32 Value = bNoDelay ? 1 : 0;
 
@@ -86,6 +86,6 @@ bool FTCPSocket::SetNoDelay(bool bNoDelay)
 		return true;
 	}
 
-	FSocketUtility::ReportErrorCode(ErrorCode);
+	FSocketUtility::ReportLastErrorCode();
 	return false;
 }

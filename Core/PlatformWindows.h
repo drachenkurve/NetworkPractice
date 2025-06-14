@@ -28,6 +28,8 @@ struct FWindowsPlatformTypes
 	using ssize = signed int;
 	using usize = unsigned int;
 #endif
+
+	// TODO: what about character types?
 };
 
 using FPlatformTypes = FWindowsPlatformTypes;

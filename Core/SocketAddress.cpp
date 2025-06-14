@@ -74,7 +74,7 @@ std::string FSocketAddress::ToIPv4String(bool bIncludePort) const
 		}
 		else
 		{
-			FSocketUtility::ReportErrorCode(ErrorCode);
+			FSocketUtility::ReportLastErrorCode();
 		}
 	}
 
