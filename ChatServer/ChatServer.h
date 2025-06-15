@@ -39,7 +39,7 @@ protected:
 	void WorkerFunction();
 
 protected:
-	bool bRunning;
+	std::atomic<bool> bRunning;
 
 	std::unique_ptr<FIocp> Iocp;
 	std::shared_ptr<FTcpSocket> ListenSocket;
@@ -48,6 +48,6 @@ protected:
 
 	std::vector<std::thread> WorkerThreads;
 
-	std::mutex ConnectionMapMutex;
+	mutable std::mutex ConnectionMapMutex;
 	std::unordered_map<SOCKET, std::shared_ptr<FChatConnection>> ConnectionMap;
 };

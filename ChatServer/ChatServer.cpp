@@ -16,6 +16,7 @@ FChatServer::FChatServer():
 
 FChatServer::~FChatServer()
 {
+	Cleanup();
 }
 
 bool FChatServer::Startup(u16 Port, i32 ThreadCount, i32 AcceptCount)
@@ -174,29 +175,12 @@ bool FChatServer::PostSend(FIocpContext& SendContext, u32& ByteCount, u32 Flags)
 		return false;
 	}
 
-	WSABUF Buffer;
-	Buffer.buf = reinterpret_cast<CHAR*>(SendContext.Buffer.data());
-	Buffer.len = static_cast<ULONG>(SendContext.Buffer.size());
-
-	DWORD LocalByteCount = 0;
-	DWORD LocalFlags = Flags;
-
-	const int ErrorCode = WSASend(SendContext.Socket->GetNative(), &Buffer, 1, &LocalByteCount, LocalFlags, &SendContext.Overlapped, nullptr);
-
-	if (ErrorCode == 0)
+	if (!Iocp)
 	{
-		ByteCount = LocalByteCount;
-		return true;
+		return false;
 	}
 
-	if (ErrorCode == SOCKET_ERROR && FSocketUtility::GetLastErrorCode() == WSA_IO_PENDING)
-	{
-		ByteCount = LocalByteCount;
-		return true;
-	}
-
-	FSocketUtility::ReportLastErrorCode();
-	return false;
+	return Iocp->Send(SendContext.Socket, &SendContext.Overlapped, SendContext.Buffer.data(), static_cast<u32>(SendContext.Buffer.size()), ByteCount, Flags);
 }
 
 bool FChatServer::PostRecv(FIocpContext& RecvContext, u32& ByteCount, u32 Flags)
@@ -211,29 +195,12 @@ bool FChatServer::PostRecv(FIocpContext& RecvContext, u32& ByteCount, u32 Flags)
 		return false;
 	}
 
-	WSABUF Buffer;
-	Buffer.buf = reinterpret_cast<CHAR*>(RecvContext.Buffer.data());
-	Buffer.len = static_cast<ULONG>(RecvContext.Buffer.size());
-
-	DWORD LocalByteCount = 0;
-	DWORD LocalFlags = Flags;
-
-	const int ErrorCode = WSARecv(RecvContext.Socket->GetNative(), &Buffer, 1, &LocalByteCount, &LocalFlags, &RecvContext.Overlapped, nullptr);
-
-	if (ErrorCode == 0)
+	if (!Iocp)
 	{
-		ByteCount = LocalByteCount;
-		return true;
+		return false;
 	}
 
-	if (ErrorCode == SOCKET_ERROR && FSocketUtility::GetLastErrorCode() == WSA_IO_PENDING)
-	{
-		ByteCount = LocalByteCount;
-		return true;
-	}
-
-	FSocketUtility::ReportLastErrorCode();
-	return false;
+	return Iocp->Recv(RecvContext.Socket, &RecvContext.Overlapped, RecvContext.Buffer.data(), static_cast<u32>(RecvContext.Buffer.size()), ByteCount, Flags);
 }
 
 void FChatServer::HandleAccept(FIocpContext& AcceptContext)
@@ -359,20 +326,15 @@ void FChatServer::HandleRecv(FIocpContext& RecvContext)
 			UserNameSize = strnlen_s(Message.UserName, MaxUserNameSize);
 		}
 
-		if (UserNameSize == 0)
-		{
-			Connection->UserName = std::string{"Unknown"};
-		}
-		else
-		{
-			Connection->UserName = std::string{Message.UserName, UserNameSize};
-		}
+		Connection->UserName = UserNameSize > 0 ? std::string{Message.UserName, UserNameSize} : std::string{"UNKNOWN"};
 
 		FChatMessage LoginMessage;
 		LoginMessage.Type = EChatMessageType::System;
 
 		const std::string LoginString = std::format("{}님이 채팅에 입장하셨습니다", Connection->UserName);
 		strncpy_s(LoginMessage.Data, sizeof(LoginMessage.Data), LoginString.c_str(), sizeof(LoginMessage.Data) - 1);
+
+		std::cout << "[LOGIN] " << Connection->UserName << ": " << Connection->Address.ToIPv4String(true) << '\n';
 
 		SendAll(LoginMessage);
 
@@ -393,6 +355,8 @@ void FChatServer::HandleRecv(FIocpContext& RecvContext)
 		const std::string LogoutString = std::format("{}님이 채팅에서 나가셨습니다", Connection->UserName);
 		strncpy_s(LogoutMessage.Data, LogoutString.c_str(), sizeof(LogoutMessage.Data) - 1);
 
+		std::cout << "[LOGOUT] " << Connection->UserName << ": " << Connection->Address.ToIPv4String(true) << '\n';
+
 		SendAll(LogoutMessage);
 
 		Disconnect(Connection);
@@ -402,6 +366,8 @@ void FChatServer::HandleRecv(FIocpContext& RecvContext)
 
 	case EChatMessageType::Data:
 	{
+		std::cout << "[DATA] " << Connection->UserName << ": " << Connection->Address.ToIPv4String(true) << '\n';
+
 		SendAll(Message);
 
 		break;
