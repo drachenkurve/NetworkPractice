@@ -5,10 +5,24 @@
 
 class FTcpSocket;
 
+enum class EChatConnectionState : u8
+{
+	Connected,
+	Disconnecting,
+	Disconnected,
+};
+
 struct FChatConnection
 {
 public:
-	FChatConnection(const std::shared_ptr<FTcpSocket>& InSocket, std::string_view InUserName, const FSocketAddress& InAddress);
+	//FChatConnection(const std::shared_ptr<FTcpSocket>& InSocket, std::string_view InUserName, const FSocketAddress& InAddress);
+
+	bool IsConnected() const;
+
+	EChatConnectionState GetState() const;
+
+	bool TryDisconnect();
+	void SetDisconnected();
 
 public:
 	std::shared_ptr<FTcpSocket> Socket;
@@ -16,5 +30,7 @@ public:
 
 	FSocketAddress Address;
 
-	std::atomic<bool> bConnected;
+protected:
+	mutable std::mutex StateMutex;
+	EChatConnectionState State;
 };

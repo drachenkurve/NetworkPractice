@@ -270,7 +270,10 @@ void FChatServer::HandleAccept(FIocpContext& AcceptContext)
 	FSocketAddress RemoteAddress{};
 	memcpy(&RemoteAddress.Storage, RemoteSockaddr, sizeof(sockaddr_in));
 
-	std::shared_ptr<FChatConnection> Connection = std::make_shared<FChatConnection>(Socket, "PLACEHOLDER", RemoteAddress);
+	std::shared_ptr<FChatConnection> Connection = std::make_shared<FChatConnection>();
+	Connection->Socket = Socket;
+	Connection->UserName = "PLACEHOLDER";
+	Connection->Address = RemoteAddress;
 
 	{
 		std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
@@ -332,7 +335,7 @@ void FChatServer::HandleRecv(FIocpContext& RecvContext)
 		Connection = It->second;
 	}
 
-	if (!Connection->bConnected.load())
+	if (!Connection->IsConnected())
 	{
 		return;
 	}
@@ -419,29 +422,31 @@ void FChatServer::Disconnect(std::shared_ptr<FChatConnection> Connection)
 		return;
 	}
 
-	bool expected = true;
-	if (!Connection->bConnected.compare_exchange_strong(expected, false))
+	if (!Connection->TryDisconnect())
 	{
 		return;
 	}
 
-	if (!Connection->Socket || !Connection->Socket->IsValid())
+	SOCKET NativeSocket = INVALID_SOCKET;
+
+	if (Connection->Socket && Connection->Socket->IsValid())
 	{
-		return;
+		NativeSocket = Connection->Socket->GetNative();
+		Connection->Socket->Close();
 	}
 
-	Connection->Socket->Close();
+	Connection->SetDisconnected();
 
+	if (NativeSocket != INVALID_SOCKET)
 	{
 		std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
-
-		ConnectionMap.erase(Connection->Socket->GetNative());
+		ConnectionMap.erase(NativeSocket);
 	}
 }
 
 void FChatServer::SendTo(const std::shared_ptr<FChatConnection>& Connection, const FChatMessage& Message)
 {
-	if (!Connection->bConnected.load())
+	if (!Connection || !Connection->IsConnected())
 	{
 		return;
 	}
