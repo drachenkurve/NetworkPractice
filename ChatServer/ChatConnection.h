@@ -5,10 +5,10 @@
 
 class FTcpSocket;
 
-struct FConnection
+struct FChatConnection
 {
 public:
-	FConnection(const std::shared_ptr<FTcpSocket>& InSocket, std::string_view InUserName, const FSocketAddress& InAddress);
+	FChatConnection(const std::shared_ptr<FTcpSocket>& InSocket, std::string_view InUserName, const FSocketAddress& InAddress);
 
 public:
 	std::shared_ptr<FTcpSocket> Socket;
@@ -16,5 +16,5 @@ public:
 
 	FSocketAddress Address;
 
-	bool bConnected;
+	std::atomic<bool> bConnected;
 };

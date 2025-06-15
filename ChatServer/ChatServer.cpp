@@ -1,8 +1,7 @@
 ﻿#include "ChatServer.h"
 
-#include <ranges>
-
-#include "Connection.h"
+#include "ChatConnection.h"
+#include "ChatMessage.h"
 #include "Iocp.h"
 #include "IocpContext.h"
 #include "PlatformWindowsUtility.h"
@@ -77,7 +76,7 @@ bool FChatServer::Startup(u16 Port, i32 ThreadCount, i32 AcceptCountFallback)
 		return false;
 	}
 
-	if (!Iocp->Register(ListenSocket, &ListenSocket))
+	if (!Iocp->Register(ListenSocket, reinterpret_cast<void*>(ListenSocket->GetNative())))
 	{
 		return false;
 	}
@@ -111,7 +110,7 @@ void FChatServer::Cleanup()
 
 	{
 		std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
-		for (auto& Connection : ConnectionMap | std::views::values)
+		for (const std::shared_ptr<FChatConnection>& Connection : ConnectionMap | std::views::values)
 		{
 			Connection->Socket->Close();
 		}
@@ -271,7 +270,7 @@ void FChatServer::HandleAccept(FIocpContext& AcceptContext)
 	FSocketAddress RemoteAddress{};
 	memcpy(&RemoteAddress.Storage, RemoteSockaddr, sizeof(sockaddr_in));
 
-	std::shared_ptr<FConnection> Connection = std::make_shared<FConnection>(Socket, "PLACEHOLDER", AcceptContext.Address);
+	std::shared_ptr<FChatConnection> Connection = std::make_shared<FChatConnection>(Socket, "PLACEHOLDER", RemoteAddress);
 
 	{
 		std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
@@ -286,7 +285,7 @@ void FChatServer::HandleAccept(FIocpContext& AcceptContext)
 	}
 
 	FIocpContext* RecvContext = new FIocpContext{EIocpOperationType::Recv, Socket};
-	RecvContext->Buffer.resize(1024);
+	RecvContext->Buffer.resize(sizeof(FChatMessage));
 
 	u32 ByteCount = 0;
 	if (!PostRecv(*RecvContext, ByteCount))
@@ -310,16 +309,118 @@ void FChatServer::HandleRecv(FIocpContext& RecvContext)
 		return;
 	}
 
-	// TODO
+	constexpr usize MessageSize = sizeof(FChatMessage);
+	if (RecvContext.Buffer.size() < MessageSize)
+	{
+		return;
+	}
+
+	FChatMessage Message;
+	memcpy(&Message, RecvContext.Buffer.data(), MessageSize);
+
+	std::shared_ptr<FChatConnection> Connection;
+
+	{
+		std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
+
+		const auto It = ConnectionMap.find(Socket->GetNative());
+		if (It == ConnectionMap.end())
+		{
+			return;
+		}
+
+		Connection = It->second;
+	}
+
+	if (!Connection->bConnected.load())
+	{
+		return;
+	}
+
+	switch (Message.Type)
+	{
+	case EChatMessageType::Login:
+	{
+		constexpr usize MaxUserNameSize = sizeof(Message.UserName);
+		usize UserNameSize = Message.UserNameSize;
+
+		if (UserNameSize == 0 || UserNameSize > MaxUserNameSize)
+		{
+			UserNameSize = strnlen_s(Message.UserName, MaxUserNameSize);
+		}
+
+		if (UserNameSize == 0)
+		{
+			Connection->UserName = std::string{"Unknown"};
+		}
+		else
+		{
+			Connection->UserName = std::string{Message.UserName, UserNameSize};
+		}
+
+		FChatMessage LoginMessage;
+		LoginMessage.Type = EChatMessageType::System;
+
+		const std::string LoginString = std::format("{}님이 채팅에 입장하셨습니다", Connection->UserName);
+		strncpy_s(LoginMessage.Data, sizeof(LoginMessage.Data), LoginString.c_str(), sizeof(LoginMessage.Data) - 1);
+
+		SendAll(LoginMessage);
+
+		FChatMessage WelcomeMessage;
+		WelcomeMessage.Type = EChatMessageType::System;
+		strcpy_s(WelcomeMessage.Data, "채팅에 오신 것을 환영합니다");
+
+		SendTo(Connection, WelcomeMessage);
+
+		break;
+	}
+
+	case EChatMessageType::Logout:
+	{
+		FChatMessage LogoutMessage;
+		LogoutMessage.Type = EChatMessageType::System;
+
+		const std::string LogoutString = std::format("{}님이 채팅에서 나가셨습니다", Connection->UserName);
+		strncpy_s(LogoutMessage.Data, LogoutString.c_str(), sizeof(LogoutMessage.Data) - 1);
+
+		SendAll(LogoutMessage);
+
+		Disconnect(Connection);
+
+		break;
+	}
+
+	case EChatMessageType::Data:
+	{
+		SendAll(Message);
+
+		break;
+	}
+
+	default:
+		break;
+	}
+
+	FIocpContext* RecvContext = new FIocpContext{EIocpOperationType::Recv, Socket};
+	RecvContext->Buffer.resize(MessageSize);
+
+	u32 ByteCount = 0;
+	if (!PostRecv(*RecvContext, ByteCount))
+	{
+		Disconnect(Connection);
+		delete RecvContext;
+	}
 }
 
-void FChatServer::Disconnect(std::shared_ptr<FConnection> Connection)
+void FChatServer::Disconnect(std::shared_ptr<FChatConnection> Connection)
 {
-	std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
+	if (!Connection)
+	{
+		return;
+	}
 
-	// NOTE: or change bConnected to atomic and CAS?
-
-	if (!Connection || !Connection->bConnected)
+	bool expected = true;
+	if (!Connection->bConnected.compare_exchange_strong(expected, false))
 	{
 		return;
 	}
@@ -330,9 +431,52 @@ void FChatServer::Disconnect(std::shared_ptr<FConnection> Connection)
 	}
 
 	Connection->Socket->Close();
-	Connection->bConnected = false;
 
-	ConnectionMap.erase(Connection->Socket->GetNative());
+	{
+		std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
+
+		ConnectionMap.erase(Connection->Socket->GetNative());
+	}
+}
+
+void FChatServer::SendTo(const std::shared_ptr<FChatConnection>& Connection, const FChatMessage& Message)
+{
+	if (!Connection->bConnected.load())
+	{
+		return;
+	}
+
+	FIocpContext* SendContext = new FIocpContext{EIocpOperationType::Send, Connection->Socket};
+	SendContext->Buffer.resize(sizeof(Message));
+	memcpy(SendContext->Buffer.data(), &Message, sizeof(Message));
+
+	u32 ByteCount = 0;
+	if (!PostSend(*SendContext, ByteCount))
+	{
+		Disconnect(Connection);
+		delete SendContext;
+	}
+}
+
+void FChatServer::SendAll(const FChatMessage& Message)
+{
+	std::vector<std::shared_ptr<FChatConnection>> LocalConnections;
+	LocalConnections.reserve(ConnectionMap.size());
+
+	{
+		std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
+
+		for (const std::shared_ptr<FChatConnection>& Connection : ConnectionMap | std::views::values)
+		{
+			LocalConnections.emplace_back(Connection);
+		}
+	}
+
+	// SendTo will check bConnected anyway
+	for (const std::shared_ptr<FChatConnection>& Connection : LocalConnections)
+	{
+		SendTo(Connection, Message);
+	}
 }
 
 void FChatServer::WorkerFunction()
@@ -361,6 +505,30 @@ void FChatServer::WorkerFunction()
 			}
 
 			FIocpContext* IocpContext = reinterpret_cast<FIocpContext*>(Entry.lpOverlapped);
+
+			if (IocpContext->OperationType == EIocpOperationType::Recv && Entry.dwNumberOfBytesTransferred != sizeof(FChatMessage))
+			{
+				std::shared_ptr<FTcpSocket> Socket = IocpContext->Socket;
+				std::shared_ptr<FChatConnection> Connection;
+
+				{
+					std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
+
+					const auto It = ConnectionMap.find(Socket->GetNative());
+					if (It != ConnectionMap.end())
+					{
+						Connection = It->second;
+					}
+				}
+
+				if (Connection)
+				{
+					Disconnect(Connection);
+				}
+
+				delete IocpContext;
+				continue;
+			}
 
 			switch (IocpContext->OperationType)
 			{

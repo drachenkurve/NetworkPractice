@@ -1,12 +1,18 @@
 ﻿#pragma once
 
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+// Windows
 #include "Windows.h"
 
-// WinSock
-#include "MSWSock.h"
+// WinSock2
 #include "WinSock2.h"
+
+// WS2tcpip
 #include "WS2tcpip.h"
+
+// MSWSock
+#include "MSWSock.h"
 
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>

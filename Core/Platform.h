@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <ranges>
 #include <string_view>
 #include <thread>
 #include <unordered_map>

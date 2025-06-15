@@ -3,10 +3,11 @@
 #include "Platform.h"
 #include "SocketAddress.h"
 
-struct FConnection;
-struct FIocpContext;
+struct FChatMessage;
 class FTcpSocket;
 class FIocp;
+struct FChatConnection;
+struct FIocpContext;
 
 class FChatServer
 {
@@ -29,7 +30,10 @@ public:
 	void HandleSend(FIocpContext& SendContext);
 	void HandleRecv(FIocpContext& RecvContext);
 
-	void Disconnect(std::shared_ptr<FConnection> Connection);
+	void Disconnect(std::shared_ptr<FChatConnection> Connection);
+
+	void SendTo(const std::shared_ptr<FChatConnection>& Connection, const FChatMessage& Message);
+	void SendAll(const FChatMessage& Message);
 
 protected:
 	void WorkerFunction();
@@ -45,5 +49,5 @@ protected:
 	std::vector<std::thread> WorkerThreads;
 
 	std::mutex ConnectionMapMutex;
-	std::unordered_map<SOCKET, std::shared_ptr<FConnection>> ConnectionMap;
+	std::unordered_map<SOCKET, std::shared_ptr<FChatConnection>> ConnectionMap;
 };
