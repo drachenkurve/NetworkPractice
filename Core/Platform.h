@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <condition_variable>
+#include <csignal>
 #include <exception>
 #include <format>
 #include <iostream>

@@ -11,6 +11,7 @@ enum class EChatMessageType : u8
 	System,
 };
 
+#pragma pack(push, 1)
 struct FChatMessage
 {
 public:
@@ -24,3 +25,4 @@ public:
 	char UserName[32];
 	char Data[1024];
 };
+#pragma pack(pop)

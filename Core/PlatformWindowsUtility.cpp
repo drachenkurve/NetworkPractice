@@ -1,5 +1,13 @@
 ﻿#include "PlatformWindowsUtility.h"
 
+i32 FPlatformWindowsUtility::GetLogicalCoreCount()
+{
+	SYSTEM_INFO Info;
+	GetSystemInfo(&Info);
+
+	return Info.dwNumberOfProcessors;
+}
+
 i32 FPlatformWindowsUtility::GetPhysicalCoreCount()
 {
 	DWORD Length = 0;

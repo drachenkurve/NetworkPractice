@@ -4,7 +4,6 @@
 #include "ChatMessage.h"
 #include "Iocp.h"
 #include "IocpContext.h"
-#include "PlatformWindowsUtility.h"
 #include "TcpSocket.h"
 
 LPFN_ACCEPTEX AcceptExFunc = nullptr;
@@ -19,7 +18,7 @@ FChatServer::~FChatServer()
 {
 }
 
-bool FChatServer::Startup(u16 Port, i32 ThreadCount, i32 AcceptCountFallback)
+bool FChatServer::Startup(u16 Port, i32 ThreadCount, i32 AcceptCount)
 {
 	Iocp = std::make_unique<FIocp>(ThreadCount);
 	if (!Iocp || !Iocp->IsValid())
@@ -88,9 +87,6 @@ bool FChatServer::Startup(u16 Port, i32 ThreadCount, i32 AcceptCountFallback)
 		WorkerThreads.emplace_back(&FChatServer::WorkerFunction, this);
 	}
 
-	const i32 PhysicalCoreCount = FPlatformWindowsUtility::GetPhysicalCoreCount();
-	const i32 AcceptCount = PhysicalCoreCount > 0 ? PhysicalCoreCount * 2 : AcceptCountFallback;
-
 	for (i32 i = 0; i < AcceptCount; ++i)
 	{
 		PostAccept();
@@ -108,6 +104,14 @@ void FChatServer::Cleanup()
 
 	bRunning = false;
 
+	for (auto& WorkerThread : WorkerThreads)
+	{
+		if (WorkerThread.joinable())
+		{
+			WorkerThread.join();
+		}
+	}
+
 	{
 		std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
 		for (const std::shared_ptr<FChatConnection>& Connection : ConnectionMap | std::views::values)
@@ -121,14 +125,6 @@ void FChatServer::Cleanup()
 	if (ListenSocket && ListenSocket->IsValid())
 	{
 		ListenSocket->Close();
-	}
-
-	for (auto& WorkerThread : WorkerThreads)
-	{
-		if (WorkerThread.joinable())
-		{
-			WorkerThread.join();
-		}
 	}
 }
 
@@ -249,6 +245,8 @@ void FChatServer::HandleAccept(FIocpContext& AcceptContext)
 		return;
 	}
 
+	SOCKET NativeListenSocket = ListenSocket->GetNative();
+
 	sockaddr_in* LocalSockaddr;
 	sockaddr_in* RemoteSockaddr;
 
@@ -262,11 +260,6 @@ void FChatServer::HandleAccept(FIocpContext& AcceptContext)
 		reinterpret_cast<sockaddr**>(&LocalSockaddr), &LocalSockaddrLength,
 		reinterpret_cast<sockaddr**>(&RemoteSockaddr), &RemoteSockaddrLength);
 
-	SOCKET NativeListenSocket = ListenSocket->GetNative();
-
-	// TODO: which class to put this?
-	setsockopt(Socket->GetNative(), SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, reinterpret_cast<const char*>(&NativeListenSocket), sizeof(SOCKET));
-
 	FSocketAddress RemoteAddress{};
 	memcpy(&RemoteAddress.Storage, RemoteSockaddr, sizeof(sockaddr_in));
 
@@ -274,6 +267,20 @@ void FChatServer::HandleAccept(FIocpContext& AcceptContext)
 	Connection->Socket = Socket;
 	Connection->UserName = "PLACEHOLDER";
 	Connection->Address = RemoteAddress;
+
+	{
+		const i32 ReturnCode = setsockopt(Socket->GetNative(), SOL_SOCKET,
+			SO_UPDATE_ACCEPT_CONTEXT, reinterpret_cast<const char*>(&NativeListenSocket), sizeof(NativeListenSocket));
+
+		if (ReturnCode == SOCKET_ERROR)
+		{
+			FSocketUtility::ReportLastErrorCode();
+
+			Disconnect(Connection);
+			PostAccept();
+			return;
+		}
+	}
 
 	{
 		std::scoped_lock<std::mutex> ConnectionMapLock{ConnectionMapMutex};
@@ -404,17 +411,18 @@ void FChatServer::HandleRecv(FIocpContext& RecvContext)
 		break;
 	}
 
-	FIocpContext* RecvContext = new FIocpContext{EIocpOperationType::Recv, Socket};
-	RecvContext->Buffer.resize(MessageSize);
+	FIocpContext* NextRecvContext = new FIocpContext{EIocpOperationType::Recv, Socket};
+	NextRecvContext->Buffer.resize(MessageSize);
 
 	u32 ByteCount = 0;
-	if (!PostRecv(*RecvContext, ByteCount))
+	if (!PostRecv(*NextRecvContext, ByteCount))
 	{
 		Disconnect(Connection);
-		delete RecvContext;
+		delete NextRecvContext;
 	}
 }
 
+// maybe just change paramter to SOCKET?
 void FChatServer::Disconnect(std::shared_ptr<FChatConnection> Connection)
 {
 	if (!Connection)
@@ -553,4 +561,6 @@ void FChatServer::WorkerFunction()
 			delete IocpContext;
 		}
 	}
+
+	std::cout << "워커 스레드 종료\n";
 }

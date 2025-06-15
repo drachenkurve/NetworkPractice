@@ -130,12 +130,17 @@ bool FIocp::RecvFrom(const std::shared_ptr<FUdpSocket>& Socket, OVERLAPPED* Over
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
-bool FIocp::Dequeue(std::vector<OVERLAPPED_ENTRY>& OverlappedEntries, u32& EntryCount, std::chrono::microseconds Timeout)
+bool FIocp::Dequeue(std::vector<OVERLAPPED_ENTRY>& OverlappedEntries, u32& EntryCount, std::chrono::milliseconds Timeout)
 {
 	if (GetQueuedCompletionStatusEx(Handle, OverlappedEntries.data(), static_cast<ULONG>(OverlappedEntries.size()),
 		reinterpret_cast<ULONG*>(&EntryCount), static_cast<ULONG>(Timeout.count()), FALSE))
 	{
 		return true;
+	}
+
+	if (GetLastError() == WAIT_TIMEOUT)
+	{
+		return false;
 	}
 
 	FSocketUtility::ReportLastErrorCode();

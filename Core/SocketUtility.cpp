@@ -45,7 +45,7 @@ void FSocketUtility::ReportErrorCode(i32 ErrorCode)
 		return;
 	}
 
-	std::cout << std::format("Error {}: {}\n", ErrorCode, Buffer);
+	std::cout << std::format("Error {}: {}", ErrorCode, Buffer);
 
 	LocalFree(Buffer);
 }

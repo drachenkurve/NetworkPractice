@@ -15,7 +15,7 @@ public:
 	FChatServer();
 	virtual ~FChatServer();
 
-	bool Startup(u16 Port, i32 ThreadCount, i32 AcceptCountFallback = 16);
+	bool Startup(u16 Port, i32 ThreadCount, i32 AcceptCount);
 	void Cleanup();
 
 	bool PostAccept();

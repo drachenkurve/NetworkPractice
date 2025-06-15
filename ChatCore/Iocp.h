@@ -36,7 +36,7 @@ public:
 	bool RecvFrom(const std::shared_ptr<FUdpSocket>& Socket, OVERLAPPED* Overlapped,
 		u8* Data, u32 Size, u32& ByteCount, FSocketAddress& Address, u32 Flags = 0);
 
-	bool Dequeue(std::vector<OVERLAPPED_ENTRY>& OverlappedEntries, u32& EntryCount, std::chrono::microseconds Timeout);
+	bool Dequeue(std::vector<OVERLAPPED_ENTRY>& OverlappedEntries, u32& EntryCount, std::chrono::milliseconds Timeout);
 
 protected:
 	HANDLE Handle;
